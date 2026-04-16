@@ -1,0 +1,63 @@
+@model IEnumerable<MentorMatch.Models.Module>
+@{
+    ViewData["Title"] = "Module Management";
+}
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="glass-card">
+            <h4 class="fw-bold mb-4">Add New <span class="text-info">Module</span></h4>
+            <form asp-action="AddModule" method="post">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Module Code</label>
+                    <input name="code" class="form-control glass-nav border-white border-opacity-25 text-white" placeholder="e.g. CS101" required />
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small text-muted">Module Name</label>
+                    <input name="name" class="form-control glass-nav border-white border-opacity-25 text-white" placeholder="e.g. Computer Science" required />
+                </div>
+                <button type="submit" class="glass-button glass-button-green w-100 py-3">Add Module</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="glass-card">
+            <h4 class="fw-bold mb-4">Existing <span class="text-info">Modules</span></h4>
+            <div class="table-responsive">
+                <table class="table table-hover text-white align-middle">
+                    <thead class="text-muted small text-uppercase">
+                        <tr>
+                            <th class="border-white border-opacity-10">Code</th>
+                            <th class="border-white border-opacity-10">Name</th>
+                            <th class="border-white border-opacity-10 text-center">Proposals</th>
+                            <th class="border-white border-opacity-10 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in Model)
+                        {
+                            <tr>
+                                <td class="border-white border-opacity-10 fw-bold">@m.Code</td>
+                                <td class="border-white border-opacity-10">@m.Name</td>
+                                <td class="border-white border-opacity-10 text-center">
+                                    <span class="badge bg-secondary">@m.Proposals.Count</span>
+                                </td>
+                                <td class="border-white border-opacity-10 text-end">
+                                    <form asp-action="DeleteModule" method="post" onsubmit="return confirm('Deleting this module might affect existing proposals. Proceed?');">
+                                        <input type="hidden" name="id" value="@m.Id" />
+                                        <button type="submit" class="btn btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+}
