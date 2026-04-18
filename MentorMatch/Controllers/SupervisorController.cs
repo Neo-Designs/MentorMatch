@@ -94,3 +94,79 @@ public class SupervisorController(
 
         return View(proposal);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> RevertToPending(int id)
+    {
+        var proposal = await context.Proposals.FindAsync(id);
+        if (proposal == null) return NotFound();
+
+        if (proposal.Status == ProposalStatus.UnderReview)
+        {
+            proposal.Status = ProposalStatus.Pending;
+            context.Notifications.Add(new Notification
+            {
+                UserId = proposal.StudentId,
+                Message = $"Your proposal for module {proposal.ModuleId} has been returned to pending."
+            });
+            await context.SaveChangesAsync();
+        }
+
+        return RedirectToAction(nameof(Dashboard));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateStatus(int id, ProposalStatus status)
+    {
+        var proposal = await context.Proposals.FindAsync(id);
+        if (proposal == null) return NotFound();
+
+        proposal.Status = status;
+        await context.SaveChangesAsync();
+
+        // Notification logic
+        string msg = status switch
+        {
+            ProposalStatus.UnderReview => $"Your proposal for module {proposal.ModuleId} is under review!",
+            ProposalStatus.Pending => $"Your proposal for module {proposal.ModuleId} has been returned to pending.",
+            _ => ""
+        };
+
+        if (!string.IsNullOrEmpty(msg))
+        {
+            context.Notifications.Add(new Notification { UserId = proposal.StudentId, Message = msg });
+            await context.SaveChangesAsync();
+        }
+
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Match(int proposalId, string message)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var proposal = await context.Proposals.FindAsync(proposalId);
+        if (proposal == null) return NotFound();
+
+        proposal.Status = ProposalStatus.Matched;
+
+        var match = new Match
+        {
+            ProposalId = proposalId,
+            SupervisorId = user.Id,
+            Message = message
+        };
+
+        context.Matches.Add(match);
+        context.Notifications.Add(new Notification
+        {
+            UserId = proposal.StudentId,
+            Message = "Your proposal has been matched with a supervisor!"
+        });
+
+        await context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Dashboard));
+    }
