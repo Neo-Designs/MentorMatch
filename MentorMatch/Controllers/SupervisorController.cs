@@ -170,3 +170,19 @@ public class SupervisorController(
 
         return RedirectToAction(nameof(Dashboard));
     }
+
+    public async Task<IActionResult> MyMatches()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var matches = await context.Matches
+            .Include(m => m.Proposal)
+                .ThenInclude(p => p.Student)
+            .Include(m => m.Proposal)
+                .ThenInclude(p => p.Module)
+            .Where(m => m.SupervisorId == user.Id)
+            .ToListAsync();
+
+        return View(matches);
+    }
