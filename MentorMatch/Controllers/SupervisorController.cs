@@ -87,7 +87,11 @@ public class SupervisorController(
             context.Notifications.Add(new Notification
             {
                 UserId = proposal.StudentId,
-                Message = $"Your proposal for module {proposal.Module.Code} is under review!"
+                Title = "Project Under Review \ud83d\udc40",
+                Message = $"A supervisor is currently reviewing your proposal: '{proposal.Title}'.",
+                LinkUrl = $"/Student/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
             });
             await context.SaveChangesAsync();
         }
@@ -107,7 +111,11 @@ public class SupervisorController(
             context.Notifications.Add(new Notification
             {
                 UserId = proposal.StudentId,
-                Message = $"Your proposal for module {proposal.ModuleId} has been returned to pending."
+                Title = "Status Update",
+                Message = $"Your proposal '{proposal.Title}' has been returned to pending.",
+                LinkUrl = $"/Student/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
             });
             await context.SaveChangesAsync();
         }
@@ -134,7 +142,15 @@ public class SupervisorController(
 
         if (!string.IsNullOrEmpty(msg))
         {
-            context.Notifications.Add(new Notification { UserId = proposal.StudentId, Message = msg });
+            context.Notifications.Add(new Notification
+            {
+                UserId = proposal.StudentId,
+                Title = "Status Update",
+                Message = msg,
+                LinkUrl = $"/Student/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
+            });
             await context.SaveChangesAsync();
         }
 
@@ -163,7 +179,11 @@ public class SupervisorController(
         context.Notifications.Add(new Notification
         {
             UserId = proposal.StudentId,
-            Message = "Your proposal has been matched with a supervisor!"
+            Title = "Match Confirmed! \ud83c\udf89",
+            Message = $"Supervisor {user.FirstName} {user.LastName} has selected your project!",
+            LinkUrl = $"/Student/Details/{proposal.Id}",
+            Timestamp = DateTime.UtcNow,
+            IsRead = false
         });
 
         await context.SaveChangesAsync();
