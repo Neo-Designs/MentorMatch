@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Analytics Dashboard";
+}
+
+<div class="row">
+    <!-- Stat Cards -->
+    <div class="col-md-4 mb-4">
+        <div class="glass-card text-center">
+            <h1 class="fw-bold text-primary display-4">@ViewBag.Matches</h1>
+            <p class="text-muted mb-0">Total Matches</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="glass-card text-center">
+            <h1 class="fw-bold text-secondary display-4">@ViewBag.Students</h1>
+            <p class="text-muted mb-0">Registered Students</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="glass-card text-center">
+            <h1 class="fw-bold opacity-75 display-4">@ViewBag.Supervisors</h1>
+            <p class="text-muted mb-0">Supervisors</p>
+        </div>
+    </div>
+</div>
