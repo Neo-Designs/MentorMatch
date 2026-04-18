@@ -176,3 +176,38 @@ public class StudentController(
                 }
                 existing.FilePath = "/uploads/" + fileName;
             }
+
+            // Update Tags
+            context.ProposalTags.RemoveRange(existing.ProposalTags);
+            foreach (var tagId in selectedTags)
+            {
+                context.ProposalTags.Add(new ProposalTag { ProposalId = existing.Id, TagId = tagId });
+            }
+
+            await context.SaveChangesAsync();
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        ViewBag.Modules = await context.Modules.ToListAsync();
+        ViewBag.Tags = await context.Tags.ToListAsync();
+        return View(proposal);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var proposal = await context.Proposals
+            .FirstOrDefaultAsync(p => p.Id == id && p.StudentId == user.Id);
+
+        if (proposal == null) return NotFound();
+        if (proposal.Status != ProposalStatus.Pending) return BadRequest();
+
+        context.Proposals.Remove(proposal);
+        await context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Dashboard));
+    }
