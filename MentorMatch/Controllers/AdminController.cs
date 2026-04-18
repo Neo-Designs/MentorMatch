@@ -1,3 +1,5 @@
+using MentorMatch.Data;
+using MentorMatch.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -116,7 +118,7 @@ public class AdminController(
         if (result.Succeeded)
         {
             await userManager.AddToRoleAsync(newUser, role.ToString());
-            
+
             // flagging invite as redeemed
             var whitelistEntry = await context.PredefinedEmails.FirstOrDefaultAsync(e => e.Email == email);
             if (whitelistEntry != null)
@@ -277,19 +279,27 @@ public class AdminController(
         {
             var proposal = match.Proposal;
             proposal.Status = ProposalStatus.Pending;
-            
+
             // alerting student
-            context.Notifications.Add(new Notification 
-            { 
-                UserId = proposal.StudentId, 
-                Message = $"ADMIN ALERT: Your match for '{proposal.Title}' has been unassigned by an administrator. Status returned to pending." 
+            context.Notifications.Add(new Notification
+            {
+                UserId = proposal.StudentId,
+                Title = "Admin Alert: Match Removed \u26A0\uFE0F", // Adding a warning emoji
+                Message = $"Your match for '{proposal.Title}' has been unassigned by an administrator. Status returned to pending.",
+                LinkUrl = $"/Student/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
             });
 
             // alerting supervisor
-            context.Notifications.Add(new Notification 
-            { 
-                UserId = match.SupervisorId, 
-                Message = $"ADMIN ALERT: Your match for project '{proposal.Title}' has been removed by an administrator." 
+            context.Notifications.Add(new Notification
+            {
+                UserId = match.SupervisorId,
+                Title = "Admin Alert: Match Removed \u26A0\uFE0F",
+                Message = $"Your match for project '{proposal.Title}' has been removed by an administrator.",
+                LinkUrl = $"/Supervisor/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
             });
 
             context.Matches.Remove(match);
