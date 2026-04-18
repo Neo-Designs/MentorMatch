@@ -111,3 +111,68 @@ public class StudentController(
         ViewBag.Tags = await context.Tags.ToListAsync();
         return View(proposal);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var proposal = await context.Proposals
+            .FirstOrDefaultAsync(p => p.Id == id && p.StudentId == user.Id);
+
+        if (proposal == null) return NotFound();
+        if (proposal.Status != ProposalStatus.Pending)
+        {
+            TempData["Error"] = "Only pending proposals can be edited.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        ViewBag.Modules = await context.Modules.ToListAsync();
+        ViewBag.Tags = await context.Tags.ToListAsync();
+        ViewBag.SelectedTags = await context.ProposalTags
+            .Where(pt => pt.ProposalId == id)
+            .Select(pt => pt.TagId)
+            .ToListAsync();
+
+        return View(proposal);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(Proposal proposal, int[] selectedTags, IFormFile? proposalPdf)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var existing = await context.Proposals
+            .Include(p => p.ProposalTags)
+            .FirstOrDefaultAsync(p => p.Id == proposal.Id && p.StudentId == user.Id);
+
+        if (existing == null) return NotFound();
+        if (existing.Status != ProposalStatus.Pending) return BadRequest();
+
+        ModelState.Remove("StudentId");
+        ModelState.Remove("Module");
+        ModelState.Remove("Student");
+
+        if (ModelState.IsValid)
+        {
+            existing.Title = proposal.Title;
+            existing.Abstract = proposal.Abstract;
+            existing.TechnicalStack = proposal.TechnicalStack;
+            existing.ResearchArea = proposal.ResearchArea;
+            existing.ModuleId = proposal.ModuleId;
+            existing.ProjectType = proposal.ProjectType;
+
+            if (proposalPdf != null)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(proposalPdf.FileName);
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", fileName);
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await proposalPdf.CopyToAsync(stream);
+                }
+                existing.FilePath = "/uploads/" + fileName;
+            }
