@@ -114,3 +114,15 @@
         </div>
     </div>
 </div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function() {
+            fetch('/Admin/GetChartData')
+                .then(r => r.json())
+                .then(data => {
+                    const ctx = document.getElementById('statusChart').getContext('2d');
+                });
+        });
+    </script>
+}
