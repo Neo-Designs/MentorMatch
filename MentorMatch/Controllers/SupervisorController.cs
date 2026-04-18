@@ -64,3 +64,33 @@ public class SupervisorController(
 
         return View(proposals);
     }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var proposal = await context.Proposals
+            .Include(p => p.Module)
+            .Include(p => p.ProposalTags)
+                .ThenInclude(pt => pt.Tag)
+            .Include(p => p.Student)
+            .Include(p => p.Match)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (proposal == null) return NotFound();
+
+        // If viewed for the first time or returning to it, set to UnderReview
+        if (proposal.Status == ProposalStatus.Pending)
+        {
+            proposal.Status = ProposalStatus.UnderReview;
+            context.Notifications.Add(new Notification
+            {
+                UserId = proposal.StudentId,
+                Message = $"Your proposal for module {proposal.Module.Code} is under review!"
+            });
+            await context.SaveChangesAsync();
+        }
+
+        return View(proposal);
+    }
