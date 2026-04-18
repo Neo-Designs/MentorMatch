@@ -47,3 +47,67 @@ public class StudentController(
 
         return View(proposal);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Submit()
+    {
+        ViewBag.Modules = await context.Modules.ToListAsync();
+        ViewBag.Tags = await context.Tags.ToListAsync();
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Submit(Proposal proposal, int[] selectedTags, IFormFile? proposalPdf)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        ModelState.Remove("StudentId");
+        ModelState.Remove("Module");
+        ModelState.Remove("Student");
+
+        if (ModelState.IsValid)
+        {
+            proposal.StudentId = user.Id;
+            proposal.CreatedAt = DateTime.UtcNow;
+            proposal.Status = ProposalStatus.Pending;
+
+            if (proposalPdf != null)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(proposalPdf.FileName);
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", fileName);
+
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await proposalPdf.CopyToAsync(stream);
+                }
+                proposal.FilePath = "/uploads/" + fileName;
+            }
+
+            context.Proposals.Add(proposal);
+            await context.SaveChangesAsync();
+
+            foreach (var tagId in selectedTags)
+            {
+                context.ProposalTags.Add(new ProposalTag { ProposalId = proposal.Id, TagId = tagId });
+            }
+
+            await context.SaveChangesAsync();
+
+            // Create notification
+            context.Notifications.Add(new Notification
+            {
+                UserId = user.Id,
+                Message = $"Your proposal for module {proposal.ModuleId} has been uploaded!"
+            });
+            await context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        ViewBag.Modules = await context.Modules.ToListAsync();
+        ViewBag.Tags = await context.Tags.ToListAsync();
+        return View(proposal);
+    }
