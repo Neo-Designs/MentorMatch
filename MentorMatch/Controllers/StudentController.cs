@@ -211,3 +211,30 @@ public class StudentController(
 
         return RedirectToAction(nameof(Dashboard));
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Profile()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return NotFound();
+        return View(user);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Profile(ApplicationUser model)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return NotFound();
+
+        user.FirstName = model.FirstName;
+        user.LastName = model.LastName;
+        user.Degree = model.Degree;
+        user.StudentNumber = model.StudentNumber;
+        user.ContactDetails = model.ContactDetails;
+
+        await userManager.UpdateAsync(user);
+        return RedirectToAction(nameof(Dashboard));
+    }
+}
+
