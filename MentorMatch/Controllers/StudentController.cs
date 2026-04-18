@@ -100,8 +100,30 @@ public class StudentController(
             context.Notifications.Add(new Notification
             {
                 UserId = user.Id,
-                Message = $"Your proposal for module {proposal.ModuleId} has been uploaded!"
+                Title = "Proposal Submitted",
+                Message = $"Your proposal '{proposal.Title}' has been successfully uploaded!",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
             });
+
+            var matchingSupervisors = await userManager.GetUsersInRoleAsync("Supervisor");
+            var supervisorsToNotify = matchingSupervisors
+                .Where(s => context.UserTags.Any(ut => ut.UserId == s.Id && selectedTags.Contains(ut.TagId)))
+                .ToList();
+
+            foreach (var supervisor in supervisorsToNotify)
+            {
+                context.Notifications.Add(new Notification
+                {
+                    UserId = supervisor.Id,
+                    Title = "New Expertise Match \u2728",
+                    Message = $"A new project '{proposal.Title}' matches your expertise tags.",
+                    LinkUrl = $"/Supervisor/Details/{proposal.Id}",
+                    Timestamp = DateTime.UtcNow,
+                    IsRead = false
+                });
+            }
+
             await context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Dashboard));
@@ -206,6 +228,21 @@ public class StudentController(
         if (proposal == null) return NotFound();
         if (proposal.Status != ProposalStatus.Pending) return BadRequest();
 
+        var admins = await userManager.GetUsersInRoleAsync("Admin");
+        foreach (var admin in admins)
+        {
+            context.Notifications.Add(new Notification
+            {
+                UserId = admin.Id,
+                Title = "Project Withdrawn",
+                Message = $"A student has withdrawn the proposal: '{proposal.Title}'.",
+                LinkUrl = "/Admin/Allocations",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
+            });
+        }
+        await context.SaveChangesAsync();
+
         context.Proposals.Remove(proposal);
         await context.SaveChangesAsync();
 
@@ -237,4 +274,3 @@ public class StudentController(
         return RedirectToAction(nameof(Dashboard));
     }
 }
-
