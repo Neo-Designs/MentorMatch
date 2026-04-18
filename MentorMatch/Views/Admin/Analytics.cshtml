@@ -23,67 +23,6 @@
         </div>
     </div>
 </div>
-@{
-    ViewData["Title"] = "Analytics Dashboard";
-}
-
-<div class="row">
-    <!-- Stat Cards -->
-    <div class="col-md-4 mb-4">
-        <div class="glass-card text-center">
-            <h1 class="fw-bold text-primary display-4">@ViewBag.Matches</h1>
-            <p class="text-muted mb-0">Total Matches</p>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="glass-card text-center">
-            <h1 class="fw-bold text-secondary display-4">@ViewBag.Students</h1>
-            <p class="text-muted mb-0">Registered Students</p>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="glass-card text-center">
-            <h1 class="fw-bold opacity-75 display-4">@ViewBag.Supervisors</h1>
-            <p class="text-muted mb-0">Supervisors</p>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-8 mb-4">
-        <div class="glass-card">
-            <h4 class="fw-bold mb-4">Proposal <span class="text-info">Status Distribution</span></h4>
-            <div style="height: 300px;">
-                <canvas id="statusChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-@{
-    ViewData["Title"] = "Analytics Dashboard";
-}
-
-<div class="row">
-    <!-- Stat Cards -->
-    <div class="col-md-4 mb-4">
-        <div class="glass-card text-center">
-            <h1 class="fw-bold text-primary display-4">@ViewBag.Matches</h1>
-            <p class="text-muted mb-0">Total Matches</p>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="glass-card text-center">
-            <h1 class="fw-bold text-secondary display-4">@ViewBag.Students</h1>
-            <p class="text-muted mb-0">Registered Students</p>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="glass-card text-center">
-            <h1 class="fw-bold opacity-75 display-4">@ViewBag.Supervisors</h1>
-            <p class="text-muted mb-0">Supervisors</p>
-        </div>
-    </div>
-</div>
 
 <div class="row">
     <div class="col-lg-8 mb-4">
@@ -114,6 +53,7 @@
         </div>
     </div>
 </div>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -130,9 +70,9 @@
                                 label: 'Number of Proposals',
                                 data: data.map(d => d.count),
                                 backgroundColor: [
-                                    'rgba(255, 209, 102, 0.4)',
-                                    'rgba(58, 134, 255, 0.4)',
-                                    'rgba(6, 214, 160, 0.4)'
+                                    'rgba(255, 209, 102, 0.4)',  // Pending
+                                    'rgba(58, 134, 255, 0.4)',   // Review
+                                    'rgba(6, 214, 160, 0.4)'    // Matched
                                 ],
                                 borderColor: [
                                     '#ffd166', '#3a86ff', '#06d6a0'
@@ -145,6 +85,34 @@
                                     'rgba(6, 214, 160, 0.8)'
                                 ]
                             }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-color'),
+                                    titleColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-main'),
+                                    bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-main'),
+                                    borderColor: getComputedStyle(document.documentElement).getPropertyValue('--glass-border'),
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    cornerRadius: 10,
+                                    displayColors: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--glass-border') },
+                                    ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted'), font: { family: 'Inter' } }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-main'), font: { weight: 'bold', family: 'Inter' } }
+                                }
+                            }
                         }
                     });
                 });
