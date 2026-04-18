@@ -1,0 +1,194 @@
+@model MentorMatch.Models.Proposal
+@{
+    ViewData["Title"] = "Edit Proposal";
+    var modules = (List<MentorMatch.Models.Module>)ViewBag.Modules;
+    var allTags = (List<MentorMatch.Models.Tag>)ViewBag.Tags;
+    var selectedTagIds = (List<int>)ViewBag.SelectedTags;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold mb-0">Edit <span class="text-info">Proposal</span></h2>
+                <div class="text-end small text-white-50" id="stepIndicator">Step 1 of 3</div>
+            </div>
+
+            <div class="progress mb-4" style="height: 6px; background: rgba(255,255,255,0.05);">
+                <div class="progress-bar bg-info" id="progressBar" style="width: 33.33%;"></div>
+            </div>
+            
+            <form asp-action="Edit" method="post" enctype="multipart/form-data" id="editForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="StudentId" />
+                <input type="hidden" asp-for="CreatedAt" />
+                <input type="hidden" asp-for="Status" />
+                <input type="hidden" asp-for="FilePath" />
+
+                <!-- Step 1: Project Details -->
+                <div class="step-content" id="step1">
+                    <h5 class="fw-bold text-white mb-4"><span class="text-info me-2">01.</span> Project Details</h5>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted">Project Type</label>
+                            <select asp-for="ProjectType" class="form-control glass-nav border-white border-opacity-25 text-white">
+                                <option value="Individual">Individual Project</option>
+                                <option value="Group">Group Project</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Core Module</label>
+                            <select asp-for="ModuleId" class="form-control glass-nav border-white border-opacity-25 text-white" required>
+                                @foreach (var m in modules)
+                                {
+                                    <option value="@m.Id">@m.Code - @m.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small text-muted">Project Title</label>
+                        <input asp-for="Title" id="titleInput" class="form-control glass-nav border-white border-opacity-25 text-white" required />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small text-muted">Abstract</label>
+                        <textarea asp-for="Abstract" id="abstractInput" class="form-control glass-nav border-white border-opacity-25 text-white" rows="6" required></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="glass-button glass-button-blue px-5" onclick="nextStep(2)">Next: Expertise <i class="bi bi-arrow-right ms-2"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Expertise Alignment -->
+                <div class="step-content d-none" id="step2">
+                    <h5 class="fw-bold text-white mb-4"><span class="text-info me-2">02.</span> Technical Expertise</h5>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted">Technical Stack</label>
+                            <input asp-for="TechnicalStack" id="stackInput" class="form-control glass-nav border-white border-opacity-25 text-white" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Research Area</label>
+                            <input asp-for="ResearchArea" id="areaInput" class="form-control glass-nav border-white border-opacity-25 text-white" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small text-muted">Strategic Tags</label>
+                        <input type="text" id="tagSearch" class="form-control glass-nav border-white border-opacity-25 text-white mb-2" placeholder="Search and add tags..." />
+                        <div id="suggestedTags" class="mb-2"></div>
+                        <div id="selectedTagsContainer" class="d-flex flex-wrap gap-2 mb-3"></div>
+                        <div id="hiddenTagInputs"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-5">
+                        <button type="button" class="btn btn-link text-white-50" onclick="nextStep(1)"><i class="bi bi-arrow-left me-2"></i> Previous</button>
+                        <button type="button" class="glass-button glass-button-blue px-5" onclick="nextStep(3)">Next: Documentation <i class="bi bi-arrow-right ms-2"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Documentation -->
+                <div class="step-content d-none" id="step3">
+                    <h5 class="fw-bold text-white mb-4"><span class="text-info me-2">03.</span> Project Specification</h5>
+                    
+                    <div class="glass-card mb-4" style="background: rgba(255,255,255,0.03);">
+                        <div class="text-center py-4">
+                            <i class="bi bi-file-earmark-pdf display-4 text-info mb-3"></i>
+                            <h6 class="fw-bold">Update Proposal PDF (Optional)</h6>
+                            <p class="x-small text-white-50 mb-4">Current file: @(System.IO.Path.GetFileName(Model.FilePath) ?? "None")</p>
+                            
+                            <input type="file" name="proposalPdf" id="pdfInput" class="form-control glass-nav border-white border-opacity-25 text-white mx-auto" style="max-width: 400px;" accept=".pdf" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-5">
+                        <button type="button" class="btn btn-link text-white-50" onclick="nextStep(2)"><i class="bi bi-arrow-left me-2"></i> Previous</button>
+                        <button type="submit" class="glass-button glass-button-green px-5 fw-bold">SAVE CHANGES</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const allTags = @Html.Raw(Json.Serialize(allTags));
+        const initialTagIds = @Html.Raw(Json.Serialize(selectedTagIds));
+        const selectedTags = new Set();
+
+        function nextStep(step) {
+            if (step === 2) {
+                if (!$('#titleInput').val() || !$('#abstractInput').val()) {
+                    alert('Please fill in Proposal Title and Abstract.');
+                    return;
+                }
+            }
+            if (step === 3) {
+                 if (!$('#stackInput').val() || !$('#areaInput').val()) {
+                    alert('Please fill in Technical Stack and Research Area.');
+                    return;
+                }
+            }
+
+            $('.step-content').addClass('d-none');
+            $('#step' + step).removeClass('d-none');
+            $('#stepIndicator').text(`Step ${step} of 3`);
+            $('#progressBar').css('width', (step * 33.33) + '%');
+            window.scrollTo(0, 0);
+        }
+
+        $(document).ready(function() {
+            // Load initial tags
+            initialTagIds.forEach(id => {
+                const tag = allTags.find(t => t.id === id);
+                if (tag) addTag(tag.id, tag.name);
+            });
+
+            $('#tagSearch').on('input', function() {
+                const query = $(this).val().toLowerCase();
+                if (query.length < 1) {
+                    $('#suggestedTags').empty();
+                    return;
+                }
+                const matches = allTags.filter(t => 
+                    t.name.toLowerCase().includes(query) && !selectedTags.has(t.id)
+                ).slice(0, 5);
+                let html = '';
+                matches.forEach(t => {
+                    html += `<button type="button" class="oval-filter small py-1 px-3 mb-1" onclick="addTag(${t.id}, '${t.name}')">${t.name}</button>`;
+                });
+                $('#suggestedTags').html(html);
+            });
+        });
+
+        function addTag(id, name) {
+            if (selectedTags.has(id)) return;
+            selectedTags.add(id);
+            $('#tagSearch').val('');
+            $('#suggestedTags').empty();
+            $('#selectedTagsContainer').append(`
+                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 p-2 d-flex align-items-center" id="tagBadge-${id}">
+                    ${name}
+                    <i class="bi bi-x-circle ms-2 cursor-pointer" onclick="removeTag(${id})"></i>
+                </span>
+            `);
+            $('#hiddenTagInputs').append(`<input type="hidden" name="selectedTags" value="${id}" id="tagInput-${id}" />`);
+        }
+
+        function removeTag(id) {
+            selectedTags.delete(id);
+            $(`#tagBadge-${id}`).remove();
+            $(`#tagInput-${id}`).remove();
+        }
+    </script>
+    <style>
+        .cursor-pointer { cursor: pointer; }
+    </style>
+}
