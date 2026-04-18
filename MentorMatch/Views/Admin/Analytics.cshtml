@@ -122,6 +122,31 @@
                 .then(r => r.json())
                 .then(data => {
                     const ctx = document.getElementById('statusChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.map(d => d.status),
+                            datasets: [{
+                                label: 'Number of Proposals',
+                                data: data.map(d => d.count),
+                                backgroundColor: [
+                                    'rgba(255, 209, 102, 0.4)',
+                                    'rgba(58, 134, 255, 0.4)',
+                                    'rgba(6, 214, 160, 0.4)'
+                                ],
+                                borderColor: [
+                                    '#ffd166', '#3a86ff', '#06d6a0'
+                                ],
+                                borderWidth: 2,
+                                borderRadius: 10,
+                                hoverBackgroundColor: [
+                                    'rgba(255, 209, 102, 0.8)',
+                                    'rgba(58, 134, 255, 0.8)',
+                                    'rgba(6, 214, 160, 0.8)'
+                                ]
+                            }]
+                        }
+                    });
                 });
         });
     </script>
