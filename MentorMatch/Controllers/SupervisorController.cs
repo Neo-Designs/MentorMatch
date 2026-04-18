@@ -186,3 +186,67 @@ public class SupervisorController(
 
         return View(matches);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Profile()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        ViewBag.AllTags = await context.Tags.ToListAsync();
+        ViewBag.MyTags = await context.UserTags
+            .Where(ut => ut.UserId == user.Id)
+            .Select(ut => ut.TagId)
+            .ToListAsync();
+
+        return View(user);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Profile(ApplicationUser model, int[] selectedTags, string? newPassword)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        // Compulsory fields for onboarding
+        if (string.IsNullOrWhiteSpace(model.FirstName) ||
+            string.IsNullOrWhiteSpace(model.LastName) ||
+            string.IsNullOrWhiteSpace(model.ContactDetails))
+        {
+            TempData["Error"] = "Name and Contact Details are compulsory.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        user.FirstName = model.FirstName;
+        user.LastName = model.LastName;
+        user.ContactDetails = model.ContactDetails;
+        user.IsProfileComplete = true;
+
+        // Update Tags
+        var existingTags = context.UserTags.Where(ut => ut.UserId == user.Id);
+        context.UserTags.RemoveRange(existingTags);
+        foreach (var tagId in selectedTags)
+        {
+            context.UserTags.Add(new ApplicationUserTag { UserId = user.Id, TagId = tagId });
+        }
+
+        // Optional Password Change
+        if (!string.IsNullOrEmpty(newPassword))
+        {
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var passResult = await userManager.ResetPasswordAsync(user, token, newPassword);
+            if (!passResult.Succeeded)
+            {
+                TempData["Error"] = "Profile updated but password change failed: " + string.Join(", ", passResult.Errors.Select(e => e.Description));
+                return RedirectToAction(nameof(Dashboard));
+            }
+        }
+
+        await userManager.UpdateAsync(user);
+        await context.SaveChangesAsync();
+
+        TempData["Success"] = "Profile updated successfully.";
+        return RedirectToAction(nameof(Dashboard));
+    }
+}
