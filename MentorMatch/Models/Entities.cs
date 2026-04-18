@@ -6,10 +6,10 @@ namespace MentorMatch.Models;
 public class Module
 {
     public int Id { get; set; }
-
+    
     [Required]
     public string Name { get; set; } = string.Empty;
-
+    
     [Required]
     public string Code { get; set; } = string.Empty;
 
@@ -19,7 +19,7 @@ public class Module
 public class Tag
 {
     public int Id { get; set; }
-
+    
     [Required]
     public string Name { get; set; } = string.Empty;
 
@@ -117,7 +117,7 @@ public class PredefinedEmail
     public UserType RoleRequested { get; set; }
 
     public string? CreatedByAdminId { get; set; }
-
+    
     public bool IsUsed { get; set; } = false;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
