@@ -1,2 +1,82 @@
-﻿<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+@*
+    MentorMatch — validation scripts partial.
+    Included at the bottom of any view that posts a form.
+    Layered over the default ASP.NET Core scaffold:
+      - asp-append-version for cache-busting after library updates
+      - CDN fallback if a local library file 404s (offline-friendly dev, resilient prod)
+      - jQuery Validate defaults tuned for Bootstrap 5 (.is-invalid / .invalid-feedback)
+      - Subtle shake micro-interaction on invalid fields (honours reduced motion)
+*@
+
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js" asp-append-version="true"></script>
+<script>
+    // Fallback to CDN if local jquery.validate failed to load.
+    (window.jQuery && window.jQuery.validator) || document.write(
+        '<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"><\/script>'
+    );
+</script>
+
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js" asp-append-version="true"></script>
+<script>
+    // Fallback to CDN if local unobtrusive failed to load.
+    (window.jQuery && window.jQuery.validator && window.jQuery.validator.unobtrusive) || document.write(
+        '<script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"><\/script>'
+    );
+</script>
+
+<script>
+    // Bootstrap 5 friendly validation rendering + reduced-motion aware shake.
+    (function () {
+        if (!window.jQuery || !jQuery.validator) return;
+
+        var prefersReducedMotion = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        jQuery.validator.setDefaults({
+            errorClass: 'is-invalid',
+            validClass: 'is-valid',
+            errorElement: 'span',
+
+            // Mirror invalid/valid state onto the <input> itself (Bootstrap 5 style).
+            highlight: function (element) {
+                jQuery(element).addClass('is-invalid').removeClass('is-valid');
+                if (!prefersReducedMotion) {
+                    var $el = jQuery(element);
+                    $el.addClass('field-shake');
+                    window.setTimeout(function () { $el.removeClass('field-shake'); }, 400);
+                }
+            },
+            unhighlight: function (element) {
+                jQuery(element).removeClass('is-invalid').addClass('is-valid');
+            },
+
+            // Place the error message as a Bootstrap 5 .invalid-feedback span
+            // directly after the input so it renders in the theme's error colour.
+            errorPlacement: function (error, element) {
+                error.addClass('invalid-feedback small mt-1');
+                if (element.prop('type') === 'checkbox' || element.prop('type') === 'radio') {
+                    error.insertAfter(element.closest('.form-check, label').last());
+                } else {
+                    error.insertAfter(element);
+                }
+            }
+        });
+    })();
+</script>
+
+<style>
+    /* Field shake — subtle side-to-side nudge on invalid. */
+    @@keyframes mm-field-shake {
+        0%, 100% { transform: translateX(0); }
+        25%      { transform: translateX(-4px); }
+        75%      { transform: translateX(4px); }
+    }
+
+    .field-shake {
+        animation: mm-field-shake 0.3s ease-in-out;
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .field-shake { animation: none !important; }
+    }
+</style>
