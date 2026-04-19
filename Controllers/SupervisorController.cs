@@ -1,16 +1,19 @@
-using MentorMatch.Data;
-using MentorMatch.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MentorMatch.Data;
+using MentorMatch.Models;
+using Microsoft.AspNetCore.SignalR;
+using MentorMatch.Hubs;
 
 namespace MentorMatch.Controllers;
 
 [Authorize(Roles = "Supervisor")]
 public class SupervisorController(
     ApplicationDbContext context,
-    UserManager<ApplicationUser> userManager) : Controller
+    UserManager<ApplicationUser> userManager,
+    IHubContext<NotificationHub> hubContext) : Controller
 {
     public async Task<IActionResult> Dashboard(int? moduleId, int? tagId, bool smartSort = false)
     {
@@ -152,7 +155,7 @@ public class SupervisorController(
 
         if (!string.IsNullOrEmpty(msg))
         {
-            context.Notifications.Add(new Notification
+            var notification = new Notification
             {
                 UserId = proposal.StudentId,
                 Title = "Status Update",
@@ -160,7 +163,9 @@ public class SupervisorController(
                 LinkUrl = $"/Student/Details/{proposal.Id}",
                 Timestamp = DateTime.UtcNow,
                 IsRead = false
-            });
+            };
+            context.Notifications.Add(notification);
+            await hubContext.Clients.User(proposal.StudentId).SendAsync("ReceiveNotification", notification);
             await context.SaveChangesAsync();
         }
 
@@ -199,16 +204,17 @@ public class SupervisorController(
             context.Matches.Add(match);
         }
 
-        context.Matches.Add(match);
-        context.Notifications.Add(new Notification
+        var notification = new Notification
         {
             UserId = proposal.StudentId,
-            Title = "Match Confirmed! \ud83c\udf89",
+            Title = "Match Confirmed! 🎉",
             Message = $"Supervisor {user.FirstName} {user.LastName} has selected your project!",
             LinkUrl = $"/Student/Details/{proposal.Id}",
             Timestamp = DateTime.UtcNow,
             IsRead = false
-        });
+        };
+        context.Notifications.Add(notification);
+        await hubContext.Clients.User(proposal.StudentId).SendAsync("ReceiveNotification", notification);
 
         await context.SaveChangesAsync();
 

@@ -1,16 +1,19 @@
-using MentorMatch.Data;
-using MentorMatch.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MentorMatch.Data;
+using MentorMatch.Models;
+using Microsoft.AspNetCore.SignalR;
+using MentorMatch.Hubs;
 
 namespace MentorMatch.Controllers;
 
 [Authorize(Roles = "Student")]
 public class StudentController(
     ApplicationDbContext context,
-    UserManager<ApplicationUser> userManager) : Controller
+    UserManager<ApplicationUser> userManager,
+    IHubContext<NotificationHub> hubContext) : Controller
 {
     public async Task<IActionResult> Dashboard()
     {
@@ -144,9 +147,9 @@ public class StudentController(
             .FirstOrDefaultAsync(p => p.Id == id && p.StudentId == user.Id);
 
         if (proposal == null) return NotFound();
-        if (proposal.Status != ProposalStatus.Pending)
+        if (proposal.Status == ProposalStatus.Matched)
         {
-            TempData["Error"] = "Only pending proposals can be edited.";
+            TempData["Error"] = "Matched projects cannot be edited.";
             return RedirectToAction(nameof(Dashboard));
         }
 
@@ -172,7 +175,10 @@ public class StudentController(
             .FirstOrDefaultAsync(p => p.Id == proposal.Id && p.StudentId == user.Id);
 
         if (existing == null) return NotFound();
-        if (existing.Status != ProposalStatus.Pending) return BadRequest();
+        if (existing.Status == ProposalStatus.Matched) return BadRequest();
+        
+        string? reviewerId = existing.Match?.SupervisorId;
+        bool isUnderReview = existing.Status == ProposalStatus.UnderReview;
 
         ModelState.Remove("StudentId");
         ModelState.Remove("Module");
@@ -207,6 +213,25 @@ public class StudentController(
             }
 
             await context.SaveChangesAsync();
+
+            // Notify supervisor if it's under review or matched (though matched is blocked above, 
+            // staying defensive if we allow it later)
+            if (!string.IsNullOrEmpty(reviewerId))
+            {
+                var notification = new Notification
+                {
+                    UserId = reviewerId,
+                    Title = "Project Updated",
+                    Message = $"The student has updated project '{existing.Title}' which was under your review.",
+                    LinkUrl = $"/Supervisor/Details/{existing.Id}",
+                    Timestamp = DateTime.UtcNow,
+                    IsRead = false
+                };
+                context.Notifications.Add(notification);
+                await hubContext.Clients.User(reviewerId).SendAsync("ReceiveNotification", notification);
+                await context.SaveChangesAsync();
+            }
+
             return RedirectToAction(nameof(Dashboard));
         }
 
