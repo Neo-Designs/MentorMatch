@@ -24,6 +24,15 @@ public class NotificationsController(
             .Where(n => n.UserId == user.Id && !n.IsRead)
             .OrderByDescending(n => n.Timestamp)
             .Take(10)
+            .Select(n => new
+            {
+                n.Id,
+                n.Title,
+                n.Message,
+                n.LinkUrl,
+                n.Timestamp,
+                n.IsRead
+            })
             .ToListAsync();
 
         return Ok(notifications);

@@ -62,7 +62,7 @@ public class LoginModel(
 
         if (ModelState.IsValid)
         {
-            
+
             var result = await signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
             if (result.Succeeded)
             {
@@ -105,7 +105,7 @@ public class LoginModel(
                         if (createResult.Succeeded)
                         {
                             await userManager.AddToRoleAsync(newUser, newUser.UserType.ToString());
-                            
+
                             whitelistEntry.IsUsed = true;
                             await context.SaveChangesAsync();
 
@@ -113,7 +113,7 @@ public class LoginModel(
                             logger.LogInformation("Whitelisted user created and logged in.");
                             return LocalRedirect(returnUrl);
                         }
-                        
+
                         foreach (var error in createResult.Errors)
                         {
                             ModelState.AddModelError(string.Empty, error.Description);
@@ -127,7 +127,7 @@ public class LoginModel(
             }
         }
 
-        
+
         return Page();
     }
 }
