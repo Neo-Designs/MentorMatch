@@ -1,0 +1,56 @@
+@model MentorMatch.Models.ApplicationUser
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="glass-card">
+            <h2 class="fw-bold mb-4">My <span class="text-info">Profile</span></h2>
+            
+            <form asp-action="Profile" method="post">
+                @Html.AntiForgeryToken()
+                
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small text-muted">First Name</label>
+                        <input asp-for="FirstName" class="form-control glass-nav border-white border-opacity-25 text-white" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Last Name</label>
+                        <input asp-for="LastName" class="form-control glass-nav border-white border-opacity-25 text-white" required />
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small text-muted">Email Address</label>
+                    <input asp-for="Email" class="form-control glass-nav border-white border-opacity-25 text-white bg-transparent" readonly />
+                    <small class="text-white-50">Email cannot be changed.</small>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small text-muted">Student Number</label>
+                        <input asp-for="StudentNumber" class="form-control glass-nav border-white border-opacity-25 text-white" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Degree Programme</label>
+                        <input asp-for="Degree" class="form-control glass-nav border-white border-opacity-25 text-white" required />
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <label class="form-label small text-muted">Contact Details / Phone</label>
+                    <input asp-for="ContactDetails" class="form-control glass-nav border-white border-opacity-25 text-white" placeholder="Optional" />
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a asp-action="Dashboard" class="text-white-50 text-decoration-none small">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                    <button type="submit" class="glass-button glass-button-green px-5">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

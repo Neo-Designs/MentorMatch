@@ -1,0 +1,68 @@
+﻿@model IEnumerable<MentorMatch.Models.Match>
+@{
+    ViewData["Title"] = "My Matched Projects";
+}
+
+<div class="mb-5">
+    <h2 class="fw-bold"><span class="text-success">Matched</span> Projects</h2>
+    <p class="text-white-50">List of students you are currently supervising.</p>
+</div>
+
+<div class="row">
+    @foreach (var match in Model)
+    {
+        <div class="col-md-6 mb-4">
+            <div class="glass-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25">@match.Proposal.Module.Code</span>
+                    <small class="text-muted">Matched on @match.MatchedAt.ToString("MMM dd, yyyy")</small>
+                </div>
+
+                <h4 class="fw-bold mb-3">@match.Proposal.Title</h4>
+                
+                <div class="p-3 bg-white bg-opacity-5 rounded mb-4">
+                    <h6 class="fw-bold mb-2">Student Details</h6>
+                    <div class="row text-black-dark">
+                        <div class="col-6">
+                            <small class="text-black-dark d-block">Name</small>
+                            <span class="text-black-dark fw-bold">@match.Proposal.Student.FirstName @match.Proposal.Student.LastName</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-black-dark d-block">Student ID</small>
+                            <span class="text-black-dark">@match.Proposal.Student.StudentNumber</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-black-dark">
+                        <small class="text-black-dark d-block">Email</small>
+                        <a href="mailto:@match.Proposal.Student.Email" class="text-info text-decoration-none fw-bold">@match.Proposal.Student.Email</a>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(match.Message))
+                {
+                    <div class="mb-4">
+                        <small class="text-black-dark d-block mb-1">Your Message</small>
+                        <div class="p-2 border-start border-success border-3 bg-white bg-opacity-10 rounded-end italic small text-black-dark">
+                            "@match.Message"
+                        </div>
+                    </div>
+                }
+
+                <div class="d-flex gap-2">
+                    <a href="@match.Proposal.FilePath" target="_blank" class="glass-button py-1 px-3 small">Proposal PDF</a>
+                    @* Add Reassign/Cancel logic if needed *@
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="col-12">
+            <div class="glass-card text-center py-5">
+                <p class="text-muted mb-0">No projects matched yet. Start reviewing proposals from the dashboard.</p>
+                <a asp-action="Dashboard" class="glass-button mt-3">Back to Review</a>
+            </div>
+        </div>
+    }
+</div>

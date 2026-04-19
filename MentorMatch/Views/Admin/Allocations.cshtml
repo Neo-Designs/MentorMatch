@@ -1,0 +1,57 @@
+@model IEnumerable<MentorMatch.Models.Match>
+@{
+    ViewData["Title"] = "Project Allocations";
+}
+
+<div class="glass-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Project <span class="text-success">Allocations</span></h2>
+        <div class="small text-muted">Total Active Matches: @Model.Count()</div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover text-white align-middle">
+            <thead class="text-muted small text-uppercase">
+                <tr>
+                    <th class="border-white border-opacity-10">Module</th>
+                    <th class="border-white border-opacity-10">Project Title</th>
+                    <th class="border-white border-opacity-10">Student</th>
+                    <th class="border-white border-opacity-10">Supervisor</th>
+                    <th class="border-white border-opacity-10">Matched Date</th>
+                    <th class="border-white border-opacity-10 text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var match in Model)
+                {
+                    <tr>
+                        <td class="border-white border-opacity-10">
+                            <span class="badge bg-secondary">@match.Proposal.Module.Code</span>
+                        </td>
+                        <td class="border-white border-opacity-10 fw-bold">@match.Proposal.Title</td>
+                        <td class="border-white border-opacity-10 small">
+                            @match.Proposal.Student.FirstName @match.Proposal.Student.LastName
+                        </td>
+                        <td class="border-white border-opacity-10 small">
+                            @match.Supervisor.FirstName @match.Supervisor.LastName
+                        </td>
+                        <td class="border-white border-opacity-10 text-white-50 small">
+                            @match.MatchedAt.ToString("MMM dd, yyyy")
+                        </td>
+                        <td class="border-white border-opacity-10 text-end">
+                            <form asp-action="DeleteMatch" method="post" onsubmit="return confirm('This will undo the match and return the proposal to pending. Proceed?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@match.ProposalId" />
+                                <button type="submit" class="glass-button py-1 px-3 small text-danger border-danger border-opacity-25">Unmatch</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+}
