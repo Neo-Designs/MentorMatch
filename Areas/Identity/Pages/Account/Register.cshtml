@@ -1,0 +1,71 @@
+@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Join MentorMatch";
+}
+
+<div class="row justify-content-center pt-5">
+    <div class="col-lg-6">
+        <div class="glass-card">
+            <h2 class="fw-bold mb-4">Create <span class="text-success">Account</span></h2>
+            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3" role="alert"></div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Input.FirstName" class="form-label small text-muted"></label>
+                        <input asp-for="Input.FirstName" class="form-control glass-nav border-white border-opacity-25 text-white" required />
+                        <span asp-validation-for="Input.FirstName" class="text-danger x-small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.LastName" class="form-label small text-muted"></label>
+                        <input asp-for="Input.LastName" class="form-control glass-nav border-white border-opacity-25 text-white" required />
+                        <span asp-validation-for="Input.LastName" class="text-danger x-small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label small text-muted"></label>
+                    <input asp-for="Input.Email" class="form-control glass-nav border-white border-opacity-25 text-white" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                    <span asp-validation-for="Input.Email" class="text-danger x-small"></span>
+                </div>
+
+                <div id="studentFields">
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.StudentNumber" class="form-label small text-muted">Student Number</label>
+                            <input asp-for="Input.StudentNumber" class="form-control glass-nav border-white border-opacity-25 text-white" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.Degree" class="form-label small text-muted">Degree</label>
+                            <input asp-for="Input.Degree" class="form-control glass-nav border-white border-opacity-25 text-white" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Input.Password" class="form-label small text-muted"></label>
+                        <input asp-for="Input.Password" class="form-control glass-nav border-white border-opacity-25 text-white" autocomplete="new-password" aria-required="true" placeholder="password" />
+                        <span asp-validation-for="Input.Password" class="text-danger x-small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.ConfirmPassword" class="form-label small text-muted"></label>
+                        <input asp-for="Input.ConfirmPassword" class="form-control glass-nav border-white border-opacity-25 text-white" autocomplete="new-password" aria-required="true" placeholder="password" />
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger x-small"></span>
+                    </div>
+                </div>
+
+                <button id="registerSubmit" type="submit" class="glass-button glass-button-green w-100 py-3 mb-4">Register</button>
+                
+                <div class="text-center small">
+                    <p class="text-white-50">Already have an account? <a asp-page="./Login" class="text-info text-decoration-none">Sign In</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

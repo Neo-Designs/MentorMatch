@@ -1,0 +1,41 @@
+@model IEnumerable<MentorMatch.Models.Tag>
+@{
+    ViewData["Title"] = "Tag Management";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold mb-0">System <span class="text-info">Tags</span></h2>
+                <div class="w-50">
+                    <form asp-action="AddTag" method="post" class="d-flex gap-2">
+                        <input name="name" class="form-control glass-nav border-white border-opacity-25 text-white" placeholder="New Tag Name (e.g. AI, IOT)" required />
+                        <button type="submit" class="glass-button glass-button-green px-4">Add</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                @foreach (var tag in Model)
+                {
+                    <div class="col-auto">
+                        <div class="glass-button d-flex align-items-center gap-3">
+                            <span class="fw-bold">@tag.Name</span>
+                            <form asp-action="DeleteTag" method="post" onsubmit="return confirm('Remove @tag.Name?');" class="d-inline">
+                                <input type="hidden" name="id" value="@tag.Id" />
+                                <button type="submit" class="btn btn-link text-danger p-0 border-0" style="font-size: 0.8rem;">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+}

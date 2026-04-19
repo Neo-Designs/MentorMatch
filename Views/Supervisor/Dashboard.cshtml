@@ -1,0 +1,248 @@
+@model IEnumerable<MentorMatch.Models.Proposal>
+@{
+    ViewData["Title"] = "Supervisor Dashboard";
+    var modules = (List<MentorMatch.Models.Module>)ViewBag.Modules;
+    var tags = (List<MentorMatch.Models.Tag>)ViewBag.ExpertiseTags;
+    int? activeModule = ViewBag.ActiveModule;
+    int? activeTag = ViewBag.ActiveTag;
+    bool isSmartSort = ViewBag.IsSmartSort;
+    var myTagIds = ((List<int>)ViewBag.MyTags) ?? new List<int>();
+}
+
+<div class="mb-4">
+    <h2 class="fw-bold mb-3">Project <span class="text-success">Review</span></h2>
+    
+    <!-- Module Filter -->
+    <div class="horizontal-scroll mb-2">
+        <a asp-action="Dashboard" asp-route-moduleId="" asp-route-tagId="@activeTag" asp-route-smartSort="@isSmartSort.ToString().ToLower()" 
+           class="oval-filter @(activeModule == null ? "active" : "")">All Modules</a>
+        @foreach (var m in modules)
+        {
+            <a asp-action="Dashboard" asp-route-moduleId="@m.Id" asp-route-tagId="@activeTag" asp-route-smartSort="@isSmartSort.ToString().ToLower()"
+               class="oval-filter @(activeModule == m.Id ? "active" : "")">@m.Code</a>
+        }
+    </div>
+
+    <!-- Expertise Tag Filter -->
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div class="horizontal-scroll flex-grow-1 me-4">
+            <small class="d-block text-muted mb-2">Filter by your expertise:</small>
+            <a asp-action="Dashboard" asp-route-moduleId="@activeModule" asp-route-tagId="" asp-route-smartSort="@isSmartSort.ToString().ToLower()"
+               class="oval-filter @(activeTag == null ? "active" : "")">All Expertise</a>
+            @foreach (var t in tags)
+            {
+                <a asp-action="Dashboard" asp-route-moduleId="@activeModule" asp-route-tagId="@t.Id" asp-route-smartSort="@isSmartSort.ToString().ToLower()"
+                   class="oval-filter @(activeTag == t.Id ? "active" : "")">@t.Name</a>
+            }
+        </div>
+        
+        <!-- Smart Sort - Repositioned and Redesigned -->
+        <div style="margin-right: 28px; margin-bottom: 5px; z-index: 100; position: relative;">
+            <a asp-action="Dashboard" 
+               asp-route-moduleId="@activeModule" 
+               asp-route-tagId="@activeTag" 
+               asp-route-smartSort="@((!isSmartSort).ToString().ToLower())" 
+               class="smart-sort-rect @(isSmartSort ? "active" : "") shadow-sm">
+                <i class="bi @(isSmartSort ? "bi-magic" : "bi-stars") me-2"></i> 
+                <span>Smart Sort @(isSmartSort ? "ON" : "OFF")</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    @foreach (var item in Model)
+    {
+        <div class="col-12 mb-4">
+            <div class="glass-card">
+                <div class="row">
+                    <div class="col-md-9">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h4 class="fw-bold mb-1">@item.Title</h4>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">@item.Module.Name</span>
+                            </div>
+                            <span class="status-badge status-@(item.Status.ToString().ToLower())" id="status-@item.Id">
+                                @item.Status
+                            </span>
+                        </div>
+                        
+                        @if (isSmartSort || activeTag != null)
+                        {
+                            var matchCount = item.ProposalTags.Count(pt => myTagIds.Contains(pt.TagId));
+                            if (matchCount > 0)
+                            {
+                                <div class="mb-3">
+                                    <span class="text-primary small fw-bold">
+                                        <i class="bi bi-star-fill me-1"></i> Expertise Match: @matchCount tag(s)
+                                    </span>
+                                </div>
+                            }
+                        }
+
+                        <p class="text-muted small mb-4">@item.Abstract</p>
+                        
+                        <div class="d-flex gap-3 mb-4">
+                            <div>
+                                <small class="text-muted d-block opacity-75">Tech Stack</small>
+                                <span class="small fw-600">@item.TechnicalStack</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block opacity-75">Research Area</small>
+                                <span class="small fw-600">@item.ResearchArea</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 d-flex flex-wrap gap-1">
+                            @foreach (var pt in item.ProposalTags)
+                            {
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2">#@pt.Tag.Name</span>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 d-flex flex-column justify-content-center border-start border-white border-opacity-10 ps-4">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="glass-button w-100 text-center mb-3 py-2">
+                             <i class="bi bi-eye"></i> View & Review
+                        </a>
+                        
+                        @if (item.Status == ProposalStatus.UnderReview)
+                        {
+                            <button type="button" class="glass-button glass-button-blue w-100 py-2" onclick="showMatchModal(@item.Id, '@item.Title')">
+                                Quick Match
+                            </button>
+                        }
+                        
+                        <a href="@item.FilePath" target="_blank" class="btn btn-link text-muted small mt-2">
+                            <i class="bi bi-download"></i> Download PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@* Removed Old FAB *@
+
+<!-- Onboarding Modal (Mandatory) -->
+@if (ViewBag.NeedsProfileSetup == true)
+{
+    var allTags = (List<MentorMatch.Models.Tag>)ViewBag.AllTags;
+    <div class="modal fade" id="onboardingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content glass-card p-0 border-0 shadow-lg" style="background-color: var(--bg-color) !important; backdrop-filter: blur(20px);">
+                <div class="p-5">
+                    <div class="text-center mb-5">
+                        <div class="rounded-circle bg-success shadow-lg bg-opacity-25 d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="bi bi-person-badge text-success display-4"></i>
+                        </div>
+                        <h2 class="fw-bold">Welcome <span class="text-success">Supervisor</span></h2>
+                        <p class="text-white-50">Please complete your profile to start reviewing projects.</p>
+                    </div>
+
+                    <form asp-action="Profile" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small text-muted">First Name</label>
+                                <input name="FirstName" class="form-control" placeholder="John" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small text-muted">Last Name</label>
+                                <input name="LastName" class="form-control" placeholder="Smith" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small text-muted">Contact Details / Office (Compulsory)</label>
+                            <textarea name="ContactDetails" class="form-control" rows="2" placeholder="e.g. Office 302, Ext 4567" required></textarea>
+                            <small class="text-info x-small">This information is shared with students you match with.</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small text-muted">Update Password (Optional)</label>
+                            <input type="password" name="newPassword" class="form-control" placeholder="••••••••" minlength="6" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small text-muted d-block mb-3">Your Expertise Areas</label>
+                            <div class="row g-2">
+                                @foreach (var tag in allTags)
+                                {
+                                    <div class="col-auto">
+                                        <div class="form-check p-0">
+                                            <input type="checkbox" class="btn-check" id="modal-tag-@tag.Id" name="selectedTags" value="@tag.Id">
+                                            <label class="oval-filter m-0 py-2 px-3 small border-opacity-25" for="modal-tag-@tag.Id" style="cursor: pointer;">
+                                                @tag.Name
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-5">
+                            <button type="submit" class="glass-button glass-button-green w-100 py-3 fw-bold shadow">
+                                Complete Onboarding & Save
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Match Modal -->
+<div class="modal fade" id="matchModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card p-0 border-0">
+            <div class="p-4">
+                <h5 class="fw-bold mb-3">Confirm <span class="text-primary">Match</span></h5>
+                <p class="text-muted small mb-4">You are about to match with project: <span id="modalProjectTitle" class="text-main fw-bold"></span></p>
+                
+                <form asp-action="Match" method="post">
+                    <input type="hidden" name="proposalId" id="modalProposalId" />
+                    <div class="mb-4">
+                        <label class="form-label small text-muted">Leave a message for the student (optional)</label>
+                        <textarea name="message" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between gap-3">
+                        <button type="button" class="btn btn-outline-secondary flex-grow-1" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="glass-button flex-grow-1">Confirm Match</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script>
+        function updateStatus(id, status) {
+            $.post('/Supervisor/UpdateStatus', { id: id, status: status }, function(res) {
+                if(res.success) {
+                    $('#status-' + id).text(status).attr('class', 'status-badge status-' + status.toLowerCase());
+                }
+            });
+        }
+
+        function showMatchModal(id, title) {
+            $('#modalProposalId').val(id);
+            $('#modalProjectTitle').text(title);
+            var modal = new bootstrap.Modal(document.getElementById('matchModal'));
+            modal.show();
+        }
+
+        $(document).ready(function() {
+            var onboardingModalEl = document.getElementById('onboardingModal');
+            if (onboardingModalEl) {
+                var onboardingModal = new bootstrap.Modal(onboardingModalEl);
+                onboardingModal.show();
+            }
+        });
+    </script>
+}

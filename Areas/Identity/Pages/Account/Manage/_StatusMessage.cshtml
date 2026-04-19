@@ -1,0 +1,10 @@
+@model string
+
+@if (!String.IsNullOrEmpty(Model))
+{
+    var statusMessageClass = Model.StartsWith("Error") ? "danger" : "success";
+    <div class="alert alert-@statusMessageClass alert-dismissible glass-card py-2 px-4 mb-4 border-@statusMessageClass border-opacity-25 text-@statusMessageClass small fade show" role="alert">
+        <i class="bi @(statusMessageClass == "success" ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-2"></i> @Model
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}

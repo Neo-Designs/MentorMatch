@@ -1,0 +1,75 @@
+@model IEnumerable<MentorMatch.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<div class="glass-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">User <span class="text-info">Management</span></h2>
+        <a asp-action="Whitelist" class="glass-button glass-button-blue py-2 px-4">
+            <i class="bi bi-envelope-plus me-2"></i> Issue New Invite
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover text-white align-middle">
+            <thead class="text-muted small text-uppercase">
+                <tr>
+                    <th class="border-white border-opacity-10">Name</th>
+                    <th class="border-white border-opacity-10">Email</th>
+                    <th class="border-white border-opacity-10">Role</th>
+                    <th class="border-white border-opacity-10">Details</th>
+                    <th class="border-white border-opacity-10">Joined</th>
+                    <th class="border-white border-opacity-10 text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td class="border-white border-opacity-10">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle bg-secondary bg-opacity-25 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    @user.FirstName[0]@user.LastName[0]
+                                </div>
+                                <span>@user.FirstName @user.LastName</span>
+                            </div>
+                        </td>
+                        <td class="border-white border-opacity-10">@user.Email</td>
+                        <td class="border-white border-opacity-10">
+                            <span class="badge @(user.UserType == UserType.Admin ? "bg-danger" : user.UserType == UserType.Supervisor ? "bg-success" : "bg-info") bg-opacity-10 text-@(user.UserType == UserType.Admin ? "danger" : user.UserType == UserType.Supervisor ? "success" : "info") border border-white border-opacity-10">
+                                @user.UserType
+                            </span>
+                        </td>
+                        <td class="border-white border-opacity-10 small text-black-dark">
+                            @if (user.UserType == UserType.Student)
+                            {
+                                <div class="@(user.UserType == UserType.Student ? "text-black-dark" : "text-white-50")">@user.Degree</div>
+                                <div class="@(user.UserType == UserType.Student ? "text-black-dark" : "text-white-50") x-small">No: @user.StudentNumber</div>
+                            }
+                            else if (user.UserType == UserType.Supervisor)
+                            {
+                                <div class="text-black-dark">Expertise Tags Active</div>
+                            }
+                        </td>
+                        <td class="border-white border-opacity-10 small text-black-dark">
+                            Synced via Identity
+                        </td>
+                        <td class="border-white border-opacity-10 text-end">
+                            <form asp-action="DeleteUser" asp-route-id="@user.Id" method="post" onsubmit="return confirm('CAUTION: This will permanently delete the user and all associated proposals/matches. Proceed?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-link text-danger p-0" title="Delete User">
+                                    <i class="bi bi-trash3 fs-5"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+}

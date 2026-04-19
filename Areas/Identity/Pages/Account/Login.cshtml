@@ -1,0 +1,50 @@
+@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Sign In";
+}
+
+<div class="row justify-content-center pt-5">
+    <div class="col-lg-5">
+        <div class="glass-card">
+            <h2 class="fw-bold mb-4">Welcome <span class="text-info">Back</span></h2>
+            
+            <form id="account" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3" role="alert"></div>
+                
+                <div class="mb-4">
+                    <label asp-for="Input.Email" class="form-label small text-muted">Email Address</label>
+                    <input asp-for="Input.Email" class="form-control glass-nav border-white border-opacity-25 text-white py-2" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                    <span asp-validation-for="Input.Email" class="text-danger x-small"></span>
+                </div>
+                
+                <div class="mb-4">
+                    <label asp-for="Input.Password" class="form-label small text-muted">Password</label>
+                    <input asp-for="Input.Password" class="form-control glass-nav border-white border-opacity-25 text-white py-2" autocomplete="current-password" aria-required="true" placeholder="password" />
+                    <span asp-validation-for="Input.Password" class="text-danger x-small"></span>
+                </div>
+                
+                <div class="mb-4 d-flex justify-content-between align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input bg-dark border-white border-opacity-25" asp-for="Input.RememberMe" />
+                        <label class="form-check-label small text-muted" asp-for="Input.RememberMe">
+                            @Html.DisplayNameFor(m => m.Input.RememberMe)
+                        </label>
+                    </div>
+                </div>
+
+                <button id="login-submit" type="submit" class="glass-button glass-button-blue w-100 py-3 mb-4 fw-bold">SIGN IN</button>
+                
+                <div class="text-center small">
+                    <p class="text-white-50">New to MentorMatch? <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-success text-decoration-none">Create Account</a></p>
+                    <p><a id="forgot-password" asp-page="./ForgotPassword" class="text-muted text-decoration-none">Forgot your password?</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
