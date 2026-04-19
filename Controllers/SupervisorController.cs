@@ -1,16 +1,19 @@
-using MentorMatch.Data;
-using MentorMatch.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MentorMatch.Data;
+using MentorMatch.Models;
+using Microsoft.AspNetCore.SignalR;
+using MentorMatch.Hubs;
 
 namespace MentorMatch.Controllers;
 
 [Authorize(Roles = "Supervisor")]
 public class SupervisorController(
     ApplicationDbContext context,
-    UserManager<ApplicationUser> userManager) : Controller
+    UserManager<ApplicationUser> userManager,
+    IHubContext<NotificationHub> hubContext) : Controller
 {
     public async Task<IActionResult> Dashboard(int? moduleId, int? tagId, bool smartSort = false)
     {
@@ -84,10 +87,14 @@ public class SupervisorController(
         if (proposal.Status == ProposalStatus.Pending)
         {
             proposal.Status = ProposalStatus.UnderReview;
-            context.Notifications.Add(new Notification 
-            { 
-                UserId = proposal.StudentId, 
-                Message = $"Your proposal for module {proposal.Module.Code} is under review!" 
+            context.Notifications.Add(new Notification
+            {
+                UserId = proposal.StudentId,
+                Title = "Project Under Review \ud83d\udc40",
+                Message = $"A supervisor is currently reviewing your proposal: '{proposal.Title}'.",
+                LinkUrl = $"/Student/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
             });
             await context.SaveChangesAsync();
         }
@@ -104,10 +111,14 @@ public class SupervisorController(
         if (proposal.Status == ProposalStatus.UnderReview)
         {
             proposal.Status = ProposalStatus.Pending;
-            context.Notifications.Add(new Notification 
-            { 
-                UserId = proposal.StudentId, 
-                Message = $"Your proposal for module {proposal.ModuleId} has been returned to pending." 
+            context.Notifications.Add(new Notification
+            {
+                UserId = proposal.StudentId,
+                Title = "Status Update",
+                Message = $"Your proposal '{proposal.Title}' has been returned to pending.",
+                LinkUrl = $"/Student/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
             });
             await context.SaveChangesAsync();
         }
@@ -122,6 +133,17 @@ public class SupervisorController(
         if (proposal == null) return NotFound();
 
         proposal.Status = status;
+
+        // Clean up match record if status is changed away from Matched
+        if (status != ProposalStatus.Matched)
+        {
+            var match = await context.Matches.FirstOrDefaultAsync(m => m.ProposalId == id);
+            if (match != null)
+            {
+                context.Matches.Remove(match);
+            }
+        }
+
         await context.SaveChangesAsync();
 
         // Notification logic
@@ -133,7 +155,17 @@ public class SupervisorController(
 
         if (!string.IsNullOrEmpty(msg))
         {
-            context.Notifications.Add(new Notification { UserId = proposal.StudentId, Message = msg });
+            var notification = new Notification
+            {
+                UserId = proposal.StudentId,
+                Title = "Status Update",
+                Message = msg,
+                LinkUrl = $"/Student/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
+            };
+            context.Notifications.Add(notification);
+            await hubContext.Clients.User(proposal.StudentId).SendAsync("ReceiveNotification", notification);
             await context.SaveChangesAsync();
         }
 
@@ -151,19 +183,38 @@ public class SupervisorController(
 
         proposal.Status = ProposalStatus.Matched;
         
-        var match = new Match
+        // Handle existing match record gracefully to prevent PK violations
+        var existingMatch = await context.Matches.FirstOrDefaultAsync(m => m.ProposalId == proposalId);
+        if (existingMatch != null)
         {
-            ProposalId = proposalId,
-            SupervisorId = user.Id,
-            Message = message
-        };
+            existingMatch.SupervisorId = user.Id;
+            existingMatch.Message = message;
+            existingMatch.MatchedAt = DateTime.UtcNow;
+            context.Matches.Update(existingMatch);
+        }
+        else
+        {
+            var match = new Match
+            {
+                ProposalId = proposalId,
+                SupervisorId = user.Id,
+                Message = message,
+                MatchedAt = DateTime.UtcNow
+            };
+            context.Matches.Add(match);
+        }
 
-        context.Matches.Add(match);
-        context.Notifications.Add(new Notification 
-        { 
-            UserId = proposal.StudentId, 
-            Message = "Your proposal has been matched with a supervisor!" 
-        });
+        var notification = new Notification
+        {
+            UserId = proposal.StudentId,
+            Title = "Match Confirmed! 🎉",
+            Message = $"Supervisor {user.FirstName} {user.LastName} has selected your project!",
+            LinkUrl = $"/Student/Details/{proposal.Id}",
+            Timestamp = DateTime.UtcNow,
+            IsRead = false
+        };
+        context.Notifications.Add(notification);
+        await hubContext.Clients.User(proposal.StudentId).SendAsync("ReceiveNotification", notification);
 
         await context.SaveChangesAsync();
 

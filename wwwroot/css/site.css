@@ -16,20 +16,20 @@
 }
 
 [data-theme='light'] {
-    --bg-color: #ffffff;
-    --glass-bg: rgba(138, 154, 91, 0.05);
-    --glass-border: rgba(138, 154, 91, 0.15);
-    --text-main: #000000;
-    --text-muted: #333d35; /* Darker sage-grey for better contrast */
-    --card-shadow: 0 12px 40px rgba(138, 154, 91, 0.1);
+    --bg-color: #fbfcfa; /* Extremely light sage base */
+    --glass-bg: rgba(138, 154, 91, 0.08);
+    --glass-border: rgba(138, 154, 91, 0.2);
+    --text-main: #1a1c18; /* Near-black for sharp text */
+    --text-muted: #444b3f;
+    --card-shadow: 0 12px 40px rgba(138, 154, 91, 0.08);
 }
 
 body {
     background-color: var(--bg-color);
     background-image: 
-        radial-gradient(at 0% 0%, rgba(138, 154, 91, 0.07) 0px, transparent 40%),
-        radial-gradient(at 100% 100%, rgba(91, 138, 154, 0.04) 0px, transparent 40%),
-        linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(138, 154, 91, 0.02) 100%);
+        radial-gradient(at 0% 0%, rgba(138, 154, 91, 0.1) 0px, transparent 40%),
+        radial-gradient(at 100% 100%, rgba(91, 138, 154, 0.06) 0px, transparent 40%),
+        linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(138, 154, 91, 0.05) 100%);
     color: var(--text-main);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
@@ -351,4 +351,93 @@ input:focus, select:focus, textarea:focus {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
+}
+
+/* Hero Section Refinements - Human Centric Design */
+.hero-badge {
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 10px 20px !important;
+    background: rgba(167, 180, 131, 0.08) !important;
+    border: 1px solid rgba(167, 180, 131, 0.2) !important;
+    color: var(--primary-light) !important;
+}
+
+.hero-title {
+    line-height: 1.1 !important;
+    letter-spacing: -0.02em;
+}
+
+.hero-text-match {
+    background: linear-gradient(135deg, #74b9cf 0%, #5B8A9A 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.85;
+    display: inline-block;
+}
+
+.hero-text-mentor {
+    background: linear-gradient(135deg, #a7b483 0%, #8A9A5B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.85;
+    display: inline-block;
+}
+
+.hero-btn {
+    background: rgba(255, 255, 255, 0.03);
+    color: white !important;
+    padding: 18px 45px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.02);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.hero-btn-primary {
+    background: rgba(138, 154, 91, 0.12);
+    border: 1px solid rgba(138, 154, 91, 0.3);
+    box-shadow: 0 0 20px rgba(138, 154, 91, 0.1);
+}
+
+.hero-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+    transform: translateY(-4px);
+    color: white !important;
+}
+
+.hero-btn-primary:hover {
+    background: rgba(138, 154, 91, 0.2);
+    border: 1px solid rgba(138, 154, 91, 0.5);
+    box-shadow: 0 0 35px rgba(138, 154, 91, 0.25);
+}
+/* Light Mode Visibility Overrides */
+[data-theme='light'] .hero-btn {
+    color: #1a1c18 !important; /* Dark text for light mode */
+    background: rgba(138, 154, 91, 0.08);
+    border: 1px solid rgba(138, 154, 91, 0.25);
+    box-shadow: 0 4px 15px rgba(138, 154, 91, 0.05);
+}
+
+[data-theme='light'] .hero-btn-primary {
+    background: rgba(138, 154, 91, 0.15);
+    border: 1px solid rgba(138, 154, 91, 0.4);
+}
+
+[data-theme='light'] .hero-btn:hover {
+    background: rgba(138, 154, 91, 0.2);
+    border: 1px solid rgba(138, 154, 91, 0.5);
+    color: #000000 !important;
+}
+
+[data-theme='light'] .hero-text-match,
+[data-theme='light'] .hero-text-mentor {
+    opacity: 1; /* Maximum contrast */
 }

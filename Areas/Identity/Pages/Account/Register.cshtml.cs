@@ -71,7 +71,7 @@ public class RegisterModel(
                 .FirstOrDefaultAsync(e => e.Email == Input.Email && !e.IsUsed);
 
             UserType assignedRole;
-            
+
             if (whitelistEntry != null)
             {
                 assignedRole = whitelistEntry.RoleRequested;
@@ -83,11 +83,11 @@ public class RegisterModel(
                 assignedRole = UserType.Student;
             }
 
-            var user = new ApplicationUser 
-            { 
-                UserName = Input.Email, 
-                Email = Input.Email, 
-                FirstName = Input.FirstName, 
+            var user = new ApplicationUser
+            {
+                UserName = Input.Email,
+                Email = Input.Email,
+                FirstName = Input.FirstName,
                 LastName = Input.LastName,
                 StudentNumber = Input.StudentNumber,
                 Degree = Input.Degree,
@@ -100,7 +100,7 @@ public class RegisterModel(
             if (result.Succeeded)
             {
                 logger.LogInformation("User created a new account with password.");
-                
+
                 await userManager.AddToRoleAsync(user, assignedRole.ToString());
 
                 await signInManager.SignInAsync(user, isPersistent: false);

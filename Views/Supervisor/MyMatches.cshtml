@@ -21,7 +21,7 @@
                 <h4 class="fw-bold mb-3">@match.Proposal.Title</h4>
                 
                 <div class="p-3 bg-white bg-opacity-5 rounded mb-4">
-                    <h6 class="fw-bold mb-2">Student Details</h6>
+                    <h6 class="fw-bold mb-2 text-black-dark">Student Details</h6>
                     <div class="row text-black-dark">
                         <div class="col-6">
                             <small class="text-black-dark d-block">Name</small>
@@ -41,8 +41,8 @@
                 @if (!string.IsNullOrEmpty(match.Message))
                 {
                     <div class="mb-4">
-                        <small class="text-black-dark d-block mb-1">Your Message</small>
-                        <div class="p-2 border-start border-success border-3 bg-white bg-opacity-10 rounded-end italic small text-black-dark">
+                        <small class="text-white d-block mb-1">Your Message</small>
+                        <div class="p-2 border-start border-success border-3 bg-white bg-opacity-10 rounded-end italic small text-white">
                             "@match.Message"
                         </div>
                     </div>

@@ -2,13 +2,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MentorMatch.Data;
+using MentorMatch.Models;
+using Microsoft.AspNetCore.SignalR;
+using MentorMatch.Hubs;
 
 namespace MentorMatch.Controllers;
 
 [Authorize(Roles = "Admin")]
 public class AdminController(
     ApplicationDbContext context,
-    UserManager<ApplicationUser> userManager) : Controller
+    UserManager<ApplicationUser> userManager,
+    IHubContext<NotificationHub> hubContext) : Controller
 {
     public async Task<IActionResult> Whitelist()
     {
@@ -116,7 +121,7 @@ public class AdminController(
         if (result.Succeeded)
         {
             await userManager.AddToRoleAsync(newUser, role.ToString());
-            
+
             // flagging invite as redeemed
             var whitelistEntry = await context.PredefinedEmails.FirstOrDefaultAsync(e => e.Email == email);
             if (whitelistEntry != null)
@@ -241,15 +246,20 @@ public class AdminController(
 
     public async Task<IActionResult> Allocations()
     {
-        var matches = await context.Matches
-            .Include(m => m.Proposal)
-                .ThenInclude(p => p.Student)
-            .Include(m => m.Supervisor)
-            .Include(m => m.Proposal)
-                .ThenInclude(p => p.Module)
+        var proposals = await context.Proposals
+            .Include(p => p.Student)
+            .Include(p => p.Module)
+            .Include(p => p.Match)
+                .ThenInclude(m => m.Supervisor)
+            .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
 
-        return View(matches);
+        ViewBag.Supervisors = await context.Users
+            .Where(u => u.UserType == UserType.Supervisor)
+            .OrderBy(u => u.FirstName)
+            .ToListAsync();
+
+        return View(proposals);
     }
 
     public async Task<IActionResult> Analytics()
@@ -277,24 +287,121 @@ public class AdminController(
         {
             var proposal = match.Proposal;
             proposal.Status = ProposalStatus.Pending;
-            
+
             // alerting student
-            context.Notifications.Add(new Notification 
-            { 
-                UserId = proposal.StudentId, 
-                Message = $"ADMIN ALERT: Your match for '{proposal.Title}' has been unassigned by an administrator. Status returned to pending." 
-            });
+            var notiStudent = new Notification
+            {
+                UserId = proposal.StudentId,
+                Title = "Admin Alert: Match Removed ⚠️",
+                Message = $"Your match for '{proposal.Title}' has been unassigned by an administrator. Status returned to pending.",
+                LinkUrl = $"/Student/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
+            };
+            context.Notifications.Add(notiStudent);
 
             // alerting supervisor
-            context.Notifications.Add(new Notification 
-            { 
-                UserId = match.SupervisorId, 
-                Message = $"ADMIN ALERT: Your match for project '{proposal.Title}' has been removed by an administrator." 
-            });
+            var notiSup = new Notification
+            {
+                UserId = match.SupervisorId,
+                Title = "Admin Alert: Match Removed ⚠️",
+                Message = $"Your match for project '{proposal.Title}' has been removed by an administrator.",
+                LinkUrl = $"/Supervisor/Details/{proposal.Id}",
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
+            };
+            context.Notifications.Add(notiSup);
+
+            await hubContext.Clients.User(notiStudent.UserId).SendAsync("ReceiveNotification", notiStudent);
+            await hubContext.Clients.User(notiSup.UserId).SendAsync("ReceiveNotification", notiSup);
 
             context.Matches.Remove(match);
             await context.SaveChangesAsync();
         }
+        return RedirectToAction(nameof(Allocations));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReassignMatch(int proposalId, string supervisorId)
+    {
+        var proposal = await context.Proposals
+            .Include(p => p.Match)
+            .FirstOrDefaultAsync(p => p.Id == proposalId);
+
+        if (proposal == null) return NotFound();
+
+        var newSupervisor = await context.Users.FirstOrDefaultAsync(u => u.Id == supervisorId);
+        if (newSupervisor == null) return NotFound();
+
+        string? oldSupervisorId = proposal.Match?.SupervisorId;
+        
+        if (proposal.Match != null)
+        {
+            // Reassign existing match
+            proposal.Match.SupervisorId = supervisorId;
+            proposal.Match.MatchedAt = DateTime.UtcNow;
+            
+            // Notification for old supervisor
+            if (!string.IsNullOrEmpty(oldSupervisorId) && oldSupervisorId != supervisorId)
+            {
+                var notiOldSup = new Notification 
+                { 
+                    UserId = oldSupervisorId, 
+                    Title = "ADMIN ALERT",
+                    Message = $"ADMIN ALERT: Your match for project '{proposal.Title}' has been reassigned to another supervisor by an administrator.",
+                    Timestamp = DateTime.UtcNow,
+                    IsRead = false
+                };
+                context.Notifications.Add(notiOldSup);
+                await hubContext.Clients.User(oldSupervisorId).SendAsync("ReceiveNotification", notiOldSup);
+            }
+        }
+        else
+        {
+            // Create new match for unassigned proposal
+            proposal.Status = ProposalStatus.Matched;
+            context.Matches.Add(new Match
+            {
+                ProposalId = proposalId,
+                SupervisorId = supervisorId,
+                MatchedAt = DateTime.UtcNow
+            });
+        }
+
+        // Notification for student
+        var nStudent = new Notification 
+        { 
+            UserId = proposal.StudentId, 
+            Title = "ADMIN ALERT",
+            Message = $"ADMIN ALERT: Your match for '{proposal.Title}' has been reassigned/assigned by an administrator.",
+            Timestamp = DateTime.UtcNow,
+            IsRead = false
+        };
+        context.Notifications.Add(nStudent);
+
+        // Notification for new supervisor
+        var nNewSup = new Notification 
+        { 
+            UserId = supervisorId, 
+            Title = "ADMIN ALERT",
+            Message = $"ADMIN ALERT: You have been assigned to project '{proposal.Title}' by an administrator.",
+            Timestamp = DateTime.UtcNow,
+            IsRead = false
+        };
+        context.Notifications.Add(nNewSup);
+
+        await hubContext.Clients.User(nStudent.UserId).SendAsync("ReceiveNotification", nStudent);
+        await hubContext.Clients.User(nNewSup.UserId).SendAsync("ReceiveNotification", nNewSup);
+
+        await context.SaveChangesAsync();
+        if (!string.IsNullOrEmpty(oldSupervisorId) && oldSupervisorId != supervisorId)
+        {
+            // The old supervisor notification was added in the loop above but not broadcasted yet
+            // For simplicity, we assume the save above handles DB, 
+            // but we should broadcast if it happened.
+        }
+        TempData["Success"] = "Match updated successfully.";
         return RedirectToAction(nameof(Allocations));
     }
 

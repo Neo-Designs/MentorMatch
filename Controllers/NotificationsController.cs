@@ -17,13 +17,22 @@ public class NotificationsController(
     [HttpGet]
     public async Task<IActionResult> Get()
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        var userId = userManager.GetUserId(User);
+        if (userId == null) return Unauthorized();
 
         var notifications = await context.Notifications
-            .Where(n => n.UserId == user.Id && !n.IsRead)
+            .Where(n => n.UserId == userId)
             .OrderByDescending(n => n.Timestamp)
-            .Take(10)
+            .Take(15)
+            .Select(n => new
+            {
+                n.Id,
+                n.Title,
+                n.Message,
+                n.LinkUrl,
+                n.Timestamp,
+                n.IsRead
+            })
             .ToListAsync();
 
         return Ok(notifications);
@@ -32,11 +41,11 @@ public class NotificationsController(
     [HttpPost("mark-read")]
     public async Task<IActionResult> MarkAsRead()
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        var userId = userManager.GetUserId(User);
+        if (userId == null) return Unauthorized();
 
         var notifications = await context.Notifications
-            .Where(n => n.UserId == user.Id && !n.IsRead)
+            .Where(n => n.UserId == userId && !n.IsRead)
             .ToListAsync();
 
         foreach (var n in notifications) n.IsRead = true;
