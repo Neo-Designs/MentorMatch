@@ -345,11 +345,16 @@ public class AdminController(
             // Notification for old supervisor
             if (!string.IsNullOrEmpty(oldSupervisorId) && oldSupervisorId != supervisorId)
             {
-                context.Notifications.Add(new Notification 
+                var notiOldSup = new Notification 
                 { 
                     UserId = oldSupervisorId, 
-                    Message = $"ADMIN ALERT: Your match for project '{proposal.Title}' has been reassigned to another supervisor by an administrator." 
-                });
+                    Title = "ADMIN ALERT",
+                    Message = $"ADMIN ALERT: Your match for project '{proposal.Title}' has been reassigned to another supervisor by an administrator.",
+                    Timestamp = DateTime.UtcNow,
+                    IsRead = false
+                };
+                context.Notifications.Add(notiOldSup);
+                await hubContext.Clients.User(oldSupervisorId).SendAsync("ReceiveNotification", notiOldSup);
             }
         }
         else
@@ -368,7 +373,10 @@ public class AdminController(
         var nStudent = new Notification 
         { 
             UserId = proposal.StudentId, 
-            Message = $"ADMIN ALERT: Your match for '{proposal.Title}' has been reassigned/assigned by an administrator." 
+            Title = "ADMIN ALERT",
+            Message = $"ADMIN ALERT: Your match for '{proposal.Title}' has been reassigned/assigned by an administrator.",
+            Timestamp = DateTime.UtcNow,
+            IsRead = false
         };
         context.Notifications.Add(nStudent);
 
@@ -376,7 +384,10 @@ public class AdminController(
         var nNewSup = new Notification 
         { 
             UserId = supervisorId, 
-            Message = $"ADMIN ALERT: You have been assigned to project '{proposal.Title}' by an administrator." 
+            Title = "ADMIN ALERT",
+            Message = $"ADMIN ALERT: You have been assigned to project '{proposal.Title}' by an administrator.",
+            Timestamp = DateTime.UtcNow,
+            IsRead = false
         };
         context.Notifications.Add(nNewSup);
 

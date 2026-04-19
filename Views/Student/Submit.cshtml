@@ -27,14 +27,14 @@
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted">Project Type</label>
-                            <select asp-for="ProjectType" class="form-control glass-nav border-white border-opacity-25 text-white">
+                            <select asp-for="ProjectType" class="form-control glass-nav border-white border-opacity-25 text-white dark-options-black">
                                 <option value="Individual">Individual Project</option>
                                 <option value="Group">Group Project</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small text-muted">Core Module</label>
-                            <select asp-for="ModuleId" class="form-control glass-nav border-white border-opacity-25 text-white" required>
+                            <select asp-for="ModuleId" class="form-control glass-nav border-white border-opacity-25 text-white dark-options-black" required>
                                 @foreach (var m in modules)
                                 {
                                     <option value="@m.Id">@m.Code - @m.Name</option>
@@ -187,5 +187,6 @@
     <style>
         .cursor-pointer { cursor: pointer; }
         .progress-bar { transition: width 0.4s ease; }
+        [data-theme='dark'] .dark-options-black option { color: #000000 !important; }
     </style>
 }
