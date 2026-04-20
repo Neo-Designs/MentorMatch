@@ -16,6 +16,7 @@
 }
 
 [data-theme='light'] {
+    --primary-main: #5a6839; /* Darker Sage for accessibility */
     --bg-color: #fbfcfa; /* Extremely light sage base */
     --glass-bg: rgba(138, 154, 91, 0.08);
     --glass-border: rgba(138, 154, 91, 0.2);

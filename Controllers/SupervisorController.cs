@@ -83,6 +83,13 @@ public class SupervisorController(
 
         if (proposal == null) return NotFound();
 
+        // SECURITY FIX: ID Traversal Prevention
+        // If the project is matched, only the matching supervisor can view details
+        if (proposal.Status == ProposalStatus.Matched && proposal.Match?.SupervisorId != user.Id)
+        {
+            return Unauthorized();
+        }
+
         // If viewed for the first time or returning to it, set to UnderReview
         if (proposal.Status == ProposalStatus.Pending)
         {

@@ -25,4 +25,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Testing\**" />
+    <Content Remove="Testing\**" />
+    <EmbeddedResource Remove="Testing\**" />
+    <None Remove="Testing\**" />
+  </ItemGroup>
+
 </Project>

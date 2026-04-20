@@ -79,3 +79,5 @@ app.MapHub<NotificationHub>("/notificationHub");
 app.MapRazorPages();
 
 app.Run();
+
+public partial class Program { }
